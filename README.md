@@ -2,99 +2,107 @@
 
 ## 1. Site Code Breakdown – How the Arenix Monitoring Dashboard Works
 
-In this section, I’ll walk through the core structure and logic behind the Arenix crowd monitoring and dynamic pricing site. The project is split into two main parts: `crowd.html` for monitoring and `dynamic.html` for pricing. Both share the same `styles.css` for visual consistency.
+In this section, we’ll walk through the core structure and logic behind the Arenix crowd monitoring and dynamic pricing site. The project is split into two main parts: `crowd.html` for monitoring and `dynamic.html` for pricing. Both share the same `styles.css` for visual consistency.
 
 ### 🧠 Overall Goal
 
-My goal was to build an interactive and data-rich UI that can:
-- **Monitor real-time crowd activity** with video feeds and analytics.
+Our goal was to build an interactive and data-rich UI that can:
+- **Monitor real-time crowd activity** using video feeds and live analytics.
 - **Adapt ticket pricing** dynamically based on crowd demand and match characteristics.
 
 ---
 
 ### `crowd.html` + `crowd.js` – Real-Time Crowd Monitoring
 
-This page shows a live dashboard tracking crowd flow and density at a stadium. It includes metrics like **total count**, **alerts**, **incidents**, and **average density per m²**.
+This page displays a live dashboard that tracks crowd flow and density at a stadium. It includes metrics such as **total count**, **alerts**, **incidents**, and **average density per m²**.
 
-- The videos (normal view, density map, and overlay) switch dynamically based on the user's selection.
-- Real-time stats like flow rate and density update every second using JavaScript intervals.
-- Alerts and recommendations are generated and displayed based on internal thresholds.
+Key features:
+- Users can toggle between video views (normal, density map, overlay).
+- Real-time stats like flow rate and density update every second.
+- Alerts and action recommendations are dynamically generated based on simulated data.
 
-The JS file `crowd.js` powers everything:
-- It initializes all video elements and plays them.
-- A live density chart (Chart.js) displays the trend over time.
-- Alerts and recommendations are injected dynamically into the DOM.
-- The crowd data is simulated and updated in real-time to mimic actual feed behavior.
+The `crowd.js` file powers this experience by:
+- Initializing video elements and ensuring seamless playback.
+- Creating a live density chart using Chart.js.
+- Managing the injection of alert and recommendation content into the DOM.
+- Simulating crowd data changes to mimic a real-time monitoring system.
+
+---
 
 ### `dynamic.html` + `dynamic.js` – Dynamic Ticket Pricing
 
-This page calculates ticket prices using a formula based on:
-- Base price of the match.
-- **Team Strength** (based on FIFA ratings).
-- **Attendance** (based on expected vs. actual attendance).
-- **Match type** (further stages of the tournament) further tweaks the price logic.
+This page handles ticket pricing using a custom formula that factors in:
+- **Base price** of the match.
+- **Team strength** based on FIFA ratings.
+- **Audience attendance**, comparing predicted vs. actual values.
+- **Match type**, which adjusts the pricing based on its significance (e.g., finals, group stage).
 
-The `dynamic.js` file:
-- Calculates **final ticket prices** dynamically.
-- Updates a **pricing trend chart** comparing base vs final prices.
-- Breaks down each component and then is equally weighted in using the formula.
-- Adds color-coded badges showing demand level (high, low, or optimal).
+Key functionalities in `dynamic.js`:
+- Real-time calculation of **final ticket prices**.
+- A visual chart comparing base prices vs. final prices.
+- Component breakdown of the pricing formula.
+- Badges showing demand level (High, Low, or Optimal).
+- Users can toggle views by day, week, or month, and simulate new prices with a single click.
+
+---
 
 ## 🎯 Dynamic Pricing Formula
 
-To determine the final dynamic ticket price, we applied a weighted formula that considers multiple match-specific factors.
+To determine the final dynamic ticket price, we applied a weighted formula that considers multiple match-specific factors:
 
-The formula used is:
 $$
 \text{Dynamic Price} = \text{Base Price} \times \left( 0.5 + 1.5 \times \frac{TS_n + AT_n + MT_n}{3} \right)
 $$
 
-
 Where:
 - **Base Price** is the initial ticket price for a match.
-- **TSₙ** = Normalized Team Strength (e.g., based on team FIFA ratings)
-- **ATₙ** = Normalized Audience attendance (predicted vs actual)
-- **MTₙ** = Normalized Match Type (e.g., final, group stage)
+- **TSₙ** = Normalized Team Strength (e.g., based on team FIFA ratings).
+- **ATₙ** = Normalized Audience Attendance (predicted vs. actual).
+- **MTₙ** = Normalized Match Type (e.g., final, group stage).
 
-This formula dynamically adjusts the base price by applying a multiplier that depends on the overall "attractiveness" of the match, ensuring ticket pricing reflects real-time demand and competitive value.
+This formula dynamically adjusts the base price by applying a multiplier based on the overall "attractiveness" of a match, ensuring pricing reflects demand and context in real time.
 
-
-Users can interact by choosing to view data by day, week, or month – and can click to simulate new pricing based on updated crowd flow.
+---
 
 ### `styles.css` – Design System
 
-The CSS ties everything together with a sleek dark theme using purple and blue gradients. We used CSS variables to keep the color scheme clean and consistent. Cards, tables, badges, progress bars, and responsive design are all handled here.
+The shared CSS file ties the entire front end together with a modern dark theme using purple and blue gradients. We used CSS variables for consistency across cards, tables, progress bars, and badges. The design is also responsive to support mobile devices.
 
 ---
 
 ## 2. MAN – Backend Script for Crowd Video Analysis
-- The estimated **number of people** in each frame.
-- A **heatmap** showing crowd density.
-- A **visual overlay** that blends the heatmap with the raw video.
 
-### 🛠 How it Works
+This backend Python script processes raw stadium footage and generates:
+- A **count-labeled video** showing the number of people per frame.
+- A **heatmap** showing crowd density visually.
+- An **overlay video** blending the original footage with the heatmap.
+
+### 🛠 How It Works
 
 1. **Model Initialization:**
-   - We used a pre-trained `vgg19`-based density estimation model from a custom library.
-   - Torch is used for deep learning inference and OpenCV for handling video frames.
+   - We used a pre-trained VGG19-based crowd estimation model.
+   - Torch is used for inference and OpenCV handles video input/output.
 
 2. **Frame Processing:**
-   - Each video frame is converted and passed through the model.
-   - The model outputs a **density map** which gets visualized as:
+   - Each frame is passed through the model, which produces a density map.
+   - Outputs are:
      - A heatmap.
-     - An overlay on the original frame.
-     - A clean count label (e.g. `Count: 132`).
+     - An overlay with the original frame.
+     - A frame annotated with person count.
 
 3. **Output Generation:**
-   - For every input video, three new videos are created:
-     - `*_count.mp4`: video with person count.
-     - `*_density.mp4`: raw heatmap of crowd density.
-     - `*_overlay.mp4`: blended video of original + heatmap.
+   - For each input video, the script outputs:
+     - `*_count.mp4`: annotated with person count.
+     - `*_density.mp4`: raw density heatmap.
+     - `*_overlay.mp4`: blended view.
+   - All outputs are compressed into a single zip (`crowd_vid4.zip`).
 
 4. **Automation:**
-   - The script can process all videos in a directory and saves the result to a zip file (`crowd_vid4.zip`).
-   - Uses `tqdm` for progress display and handles errors gracefully.
+   - The script scans a folder, processes all compatible videos, and handles errors gracefully.
+   - A progress bar via `tqdm` keeps users informed throughout the processing.
 
-### 🔗 Link to the Frontend
+---
 
-The frontend (HTML/JS) uses the processed videos from this script as its core input. These videos are loaded into the video players on the crowd monitoring page.
+### Link to the Frontend
+
+The frontend (HTML/JavaScript) loads and displays the processed videos from the backend directly within the monitoring dashboard, making the analytics visually interactive and informative.
