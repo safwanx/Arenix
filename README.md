@@ -10,7 +10,7 @@ Our goal was to build an interactive and data-rich UI that can:
 - **Monitor real-time crowd activity** using video feeds and live analytics.
 - **Adapt ticket pricing** dynamically based on crowd demand and match characteristics.
 
-### For viewing site, please double click on any of the html files to open them in browser. Can navigate to other pages from thereon
+### _For viewing site, please double click on any of the html files to open them in browser. Can navigate to other pages from thereon_.
 ---
 
 ### `crowd.html` + `crowd.js` – Real-Time Crowd Monitoring
