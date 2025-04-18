@@ -1,0 +1,27 @@
+{
+    "model_name": "XGBoost",
+    "features": [
+        "team1_strength",
+        "team2_strength",
+        "attendance_percentage",
+        "match_importance",
+        "avg_team_strength",
+        "team_strength_diff",
+        "year_normalized"
+    ],
+    "target": "formula_multiplier",
+    "performance": {
+        "train_rmse": 0.0017780976582343047,
+        "test_rmse": 0.0063243947744120455,
+        "train_mae": 0.0013690414633849696,
+        "test_mae": 0.0030468792451582676,
+        "train_r2": 0.9994619408941708,
+        "test_r2": 0.9884346391252685
+    },
+    "revenue_impact": {
+        "formula_revenue_increase": 21.31057488278667,
+        "model_revenue_increase": 21.211266874929045,
+        "model_vs_formula_increase": -0.08186261416498475
+    },
+    "timestamp": "2025-04-16 11:04:53"
+}

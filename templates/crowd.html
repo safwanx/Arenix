@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arenix - Crowd Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <h1 class="logo-text">Arenix</h1>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Nav Tabs at the top -->
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('crowd_monitoring') }}">
+                    <i class="fas fa-users"></i> Crowd Monitoring
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-tags"></i> Dynamic Pricing
+                </a>
+            </li>
+        </ul>
+
+        <!-- Overview Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h6>Total Count</h6>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <h3 class="mb-0" id="totalCount">12,628</h3>
+                        <div class="trend positive">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            <span id="countTrend">30.80%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h6>Active Incidents</h6>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <h3 class="mb-0" id="incidentCount">14</h3>
+                        <span class="badge bg-warning">Monitor</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h6>Current Alerts</h6>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <h3 class="mb-0" id="alertCount">5</h3>
+                        <span class="badge bg-danger">Critical</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h6>Average Density</h6>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <h3 class="mb-0" id="avgDensity">3.5/m²</h3>
+                        <div class="trend negative">
+                            <i class="fas fa-arrow-down me-1"></i>
+                            <span id="densityTrend">12.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Monitoring -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="calculator-card">
+                    <div class="card-header">
+                        <i class="fas fa-video fa-lg" style="color: #B51AF7;"></i>
+                        <h2>Live Monitoring</h2>
+                        <div class="btn-group view-controls ms-auto">
+                            <button class="btn btn-outline-light active" data-view="normal">Normal View</button>
+                            <button class="btn btn-outline-light" data-view="density">Density Map</button>
+                            <button class="btn btn-outline-light" data-view="overlay">Overlay View</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="video-container">
+                            <video id="normalView" class="active-view" loop muted playsinline>
+                                <source src="../static/media/stad1_count.mp4" type="video/mp4">
+                            </video>
+                            <video id="densityView" class="hidden-view" loop muted playsinline>
+                                <source src="../static/media/stad1_density.mp4" type="video/mp4">
+                            </video>
+                            <video id="overlayView" class="hidden-view" loop muted playsinline>
+                                <source src="../static/media/stad1_overlay.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="calculator-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line fa-lg" style="color: #B51AF7;"></i>
+                        <h2>Live Analytics</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="live-stats">
+                            <div class="stat-item">
+                                <label>Current Count</label>
+                                <div id="liveCount" class="value">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <label>Density Level</label>
+                                <div class="progress">
+                                    <div id="densityLevel" class="progress-bar bg-success" style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <label>Flow Rate</label>
+                                <div id="flowRate" class="value">0 people/min</div>
+                            </div>
+                            <div class="chart-container mt-4">
+                                <canvas id="densityTrendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts and Recommendations -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="calculator-card">
+                    <div class="card-header">
+                        <i class="fas fa-tasks fa-lg" style="color: #B51AF7;"></i>
+                        <h2>Recommended Actions</h2>
+                        <button class="btn btn-outline-light ms-auto" id="refreshRecommendations">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="actionList" class="action-list">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="calculator-card">
+                    <div class="card-header">
+                        <i class="fas fa-bell fa-lg" style="color: #B51AF7;"></i>
+                        <h2>Recent Alerts</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="alertList" class="alerts-panel">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/crowd.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arenix - ML-Powered Dynamic Ticket Pricing</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <h1 class="logo-text">Arenix</h1>
+  </header>
+
+  <!-- Main Content -->
+  <div class="main-container">
+    <!-- Nav Tabs at the top -->
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('crowd_monitoring') }}">
+          <i class="fas fa-users"></i> Crowd Monitoring
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{{ url_for('index') }}">
+          <i class="fas fa-tags"></i> Dynamic Pricing
+        </a>
+      </li>
+    </ul>
+    
+    <!-- Price Calculator Card -->
+    <div class="calculator-card">
+      <div class="card-header">
+        <i class="fas fa-calculator fa-lg" style="color: #B51AF7;"></i>
+        <h2>ML-Powered Price Calculator</h2>
+      </div>
+      
+      <div class="card-body">
+        <form id="price-calculator-form">
+          <div class="grid-2-cols">
+            <div>
+              <label class="form-label">Home Team</label>
+              <select class="form-select" id="team1">
+                <option value="">Select Home Team</option>
+                {% for team, strength in teams.items() %}
+                <option value="{{ team }}">{{ team }} (Strength: {{ "%.2f"|format(strength) }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div>
+              <label class="form-label">Away Team</label>
+              <select class="form-select" id="team2">
+                <option value="">Select Away Team</option>
+                {% for team, strength in teams.items() %}
+                <option value="{{ team }}">{{ team }} (Strength: {{ "%.2f"|format(strength) }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          
+          <div class="match-visual" id="match-visual" style="display: none;">
+            <div class="team-box">
+              <div class="team-name" id="team1-display">Team 1</div>
+              <div class="team-strength" id="team1-strength-display">Strength: 0.00</div>
+            </div>
+            <div class="versus">VS</div>
+            <div class="team-box">
+              <div class="team-name" id="team2-display">Team 2</div>
+              <div class="team-strength" id="team2-strength-display">Strength: 0.00</div>
+            </div>
+          </div>
+          
+          <div class="form-group mt-4">
+            <label class="form-label">Match Type</label>
+            <div class="match-type-grid">
+              {% for match_type, importance in match_types.items() %}
+              <div class="match-type-card" data-match-type="{{ match_type }}" data-importance="{{ importance }}">
+                <div class="match-type-icon">
+                  {% if match_type == 'friendly' %}
+                    <i class="fas fa-handshake"></i>
+                  {% elif match_type == 'group_stage' %}
+                    <i class="fas fa-users"></i>
+                  {% elif match_type == 'round_of_16' %}
+                    <i class="fas fa-chevron-circle-right"></i>
+                  {% elif match_type == 'quarter_finals' %}
+                    <i class="fas fa-chart-line"></i>
+                  {% elif match_type == 'semi_finals' %}
+                    <i class="fas fa-flag-checkered"></i>
+                  {% elif match_type == 'third_place' %}
+                    <i class="fas fa-medal"></i>
+                  {% elif match_type == 'final' %}
+                    <i class="fas fa-trophy"></i>
+                  {% endif %}
+                </div>
+                <div class="match-type-label">{{ match_type|replace('_', ' ')|title }}</div>
+                <div class="match-type-importance">Importance: {{ importance }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            <input type="hidden" id="match-type" value="">
+          </div>
+          
+          <div class="form-group mt-4">
+            <label class="form-label">Base Ticket Price (SAR)</label>
+            <input type="number" class="form-control" id="base-price" value="100" min="50" max="500">
+          </div>
+          
+          <div class="form-group mt-4">
+            <div class="attendance-label">
+              <label class="form-label">Expected Attendance</label>
+              <span class="attendance-percentage" id="attendance-value">75%</span>
+            </div>
+            <div class="attendance-slider-container">
+              <input type="range" class="attendance-slider" id="attendance-slider" min="30" max="100" value="75">
+              <div class="attendance-value">
+                <span>30%</span>
+                <span>65%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn-calculate">
+            <i class="fas fa-robot"></i>
+            Calculate ML Price
+          </button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Results Section (Hidden initially) -->
+    <div class="results-container" id="results-container" style="display: none;">
+      <div class="results-header">
+        <h3><i class="fas fa-chart-bar me-2"></i> ML Price Prediction Results</h3>
+        <div class="badge" id="prediction-status">Optimal</div>
+      </div>
+      
+      <div class="results-body">
+        <div class="prediction-result-cards">
+          <div class="prediction-card base-price">
+            <div class="prediction-card-title">Base Price</div>
+            <div class="prediction-card-value" id="result-base-price">100 SAR</div>
+            <div class="prediction-card-label">Starting price point</div>
+          </div>
+          
+          <div class="prediction-card multiplier">
+            <div class="prediction-card-title">ML Multiplier</div>
+            <div class="prediction-card-value" id="result-multiplier">1.25x</div>
+            <div class="prediction-card-label">Calculated from factors</div>
+          </div>
+          
+          <div class="prediction-card final-price pulse-animation">
+            <div class="prediction-card-title">Final Price</div>
+            <div class="prediction-card-value" id="result-final-price">125 SAR</div>
+            <div class="prediction-card-label">
+              <span id="price-change-text" class="positive-change">
+                <i class="fas fa-arrow-up"></i> 25%
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="price-breakdown">
+          <div class="price-breakdown-title">How the price was calculated:</div>
+          <div class="price-formula" id="price-formula">
+            final_price = base_price × ML(team_strength, attendance, match_importance, team_diff)
+          </div>
+          <div class="price-explanation" id="prediction-explanation">
+            The final price is calculated using our ML model that analyzes team strengths, expected attendance, and match importance to find the optimal price point.
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature Importance Section -->
+    <div class="feature-importance">
+      <h3><i class="fas fa-chart-pie me-2"></i> Feature Importance</h3>
+      
+      <div class="feature-bar feature-team-strength">
+        <div class="feature-bar-label">
+          <span class="feature-name">Team Strength</span>
+          <span class="feature-value" id="feature-team-strength-value">--</span>
+        </div>
+        <div class="feature-progress">
+          <div class="feature-progress-bar" id="feature-team-strength-bar" style="width: 30%"></div>
+        </div>
+      </div>
+      
+      <div class="feature-bar feature-attendance">
+        <div class="feature-bar-label">
+          <span class="feature-name">Attendance Percentage</span>
+          <span class="feature-value" id="feature-attendance-value">--</span>
+        </div>
+        <div class="feature-progress">
+          <div class="feature-progress-bar" id="feature-attendance-bar" style="width: 25%"></div>
+        </div>
+      </div>
+      
+      <div class="feature-bar feature-match-importance">
+        <div class="feature-bar-label">
+          <span class="feature-name">Match Importance</span>
+          <span class="feature-value" id="feature-match-importance-value">--</span>
+        </div>
+        <div class="feature-progress">
+          <div class="feature-progress-bar" id="feature-match-importance-bar" style="width: 20%"></div>
+        </div>
+      </div>
+      
+      <div class="feature-bar feature-team-diff">
+        <div class="feature-bar-label">
+          <span class="feature-name">Team Strength Difference</span>
+          <span class="feature-value" id="feature-team-diff-value">--</span>
+        </div>
+        <div class="feature-progress">
+          <div class="feature-progress-bar" id="feature-team-diff-bar" style="width: 15%"></div>
+        </div>
+      </div>
+      
+      <div class="feature-bar feature-other">
+        <div class="feature-bar-label">
+          <span class="feature-name">Other Factors</span>
+          <span class="feature-value">10%</span>
+        </div>
+        <div class="feature-progress">
+          <div class="feature-progress-bar" style="width: 10%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Predictions Table -->
+    <div class="recent-predictions">
+      <div class="recent-predictions-header">
+        <h3><i class="fas fa-history me-2"></i> Recent Predictions</h3>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="predictions-table" id="predictions-table">
+          <thead>
+            <tr>
+              <th>Match</th>
+              <th>Match Type</th>
+              <th>Attendance</th>
+              <th>Base Price</th>
+              <th>ML Multiplier</th>
+              <th>Final Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="predictions-tbody">
+            <tr>
+              <td colspan="7" class="text-center">No predictions yet. Calculate a price to see history.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/dynamic.js') }}"></script>
+</body>
+</html>
